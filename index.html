@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KARLO | Technology & Cybersecurity Solutions</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#060b14;--panel:#0f1928;--blue:#4ea1ff;--cyan:#00f0ff;--silver:#d4deeb;--muted:#9aaabe}
@@ -48,7 +47,7 @@ footer h2{color:white;letter-spacing:4px;margin-bottom:5px}
 .whatsapp:hover{background:#15803d;transform:translateY(-3px)}
 .hidden{display:none!important}
 .modal{position:fixed;inset:0;background:#000d;backdrop-filter:blur(5px);z-index:50;display:grid;place-items:center;padding:15px}
-.modalbox{position:relative;background:#0f1928;border:1px solid #ffffff25;border-radius:14px;padding:32px;width:min(450px,100%);box-shadow:0 20px 50px #000}
+.modalbox{position:relative;background:#0f1928;border:1px solid #ffffff25;border-radius:14px;padding:32px;width:min(550px,100%);box-shadow:0 20px 50px #000;max-height:90vh;overflow-y:auto}
 .modalbox form{display:grid;gap:14px;margin-top:20px}
 input,textarea{width:100%;padding:13px;background:#060b14;border:1px solid #3b4f6b;border-radius:8px;color:white;font:inherit;outline:none}
 input:focus,textarea:focus{border-color:var(--blue)}
@@ -57,10 +56,9 @@ textarea{min-height:120px;resize:vertical}
 .close:hover{color:white;background:none}
 .textbtn{display:block;margin-top:14px;color:#7eb2f0;background:none;border:0;font-size:14px;padding:0;text-align:right}
 .textbtn:hover{text-decoration:underline;background:none}
-.detail,.dashboard{width:90%;max-width:1100px;margin:45px auto;min-height:55vh}
-.detail ul{padding:20px 25px;color:#e2e8f0}
-.detail li{margin:10px 0}
-.ordercard{padding:20px;background:var(--panel);border:1px solid #ffffff20;border-radius:10px;margin:15px 0}
+.service-items-list{list-style:none;padding:0;margin:15px 0 25px 0}
+.service-items-list li{background:#060b14;border:1px solid #1e293b;padding:12px 16px;border-radius:8px;margin-bottom:10px;font-size:15px;display:flex;align-items:center;gap:10px}
+.service-items-list li::before{content:"🔒";font-size:14px}
 @media(max-width:850px){
 .hero{grid-template-columns:1fr;padding:50px 6%;text-align:center}
 .hero p{margin:0 auto 25px}
@@ -72,7 +70,6 @@ h2{font-size:28px}
 }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -87,7 +84,6 @@ h2{font-size:28px}
 </header>
 
 <main id="main">
-
 <section class="hero" id="home">
 <div>
 <div class="tag">KARLO CYBERSECURITY & TECH</div>
@@ -126,18 +122,6 @@ h2{font-size:28px}
 </section>
 </main>
 
-<section id="detail" class="detail hidden">
-<button onclick="home()">→ العودة للرئيسية</button>
-<div id="detailContent"></div>
-</section>
-
-<section id="dashboard" class="dashboard hidden">
-<h2>حسابي وطلباتي</h2>
-<p id="userEmail" class="muted"></p>
-<div id="ordersList"></div>
-<button onclick="logout()" style="margin-top:20px">تسجيل الخروج</button>
-</section>
-
 <footer>
 <h2>KARLO<span>.</span></h2>
 <p>CYBERSECURITY & TECHNOLOGY SOLUTIONS</p>
@@ -145,6 +129,13 @@ h2{font-size:28px}
 </footer>
 
 <a class="whatsapp" href="https://wa.me/218934551020" target="_blank">واتساب الدعم ↗</a>
+
+<div id="serviceDetailModal" class="modal hidden">
+<div class="modalbox">
+<button class="close" onclick="closeModal('serviceDetailModal')">×</button>
+<div id="modalDetailContent"></div>
+</div>
+</div>
 
 <div id="authModal" class="modal hidden">
 <div class="modalbox">
@@ -157,7 +148,6 @@ h2{font-size:28px}
 <button class="primary" id="authSubmit" style="width:100%;margin:0">تسجيل الدخول</button>
 </form>
 <button class="textbtn" onclick="switchAuth()" id="switchBtn">ليس لديك حساب؟ أنشئ حساباً جديداً</button>
-<button class="textbtn" onclick="resetPassword()" id="resetBtn">نسيت كلمة المرور؟</button>
 <p id="authMessage" class="muted" style="margin-top:12px;color:#f87171"></p>
 </div>
 </div>
@@ -172,21 +162,11 @@ h2{font-size:28px}
 <textarea id="details" placeholder="اكتب تفاصيل طلبك هنا..." required></textarea>
 <button class="primary" style="width:100%;margin:0">إرسال الطلب والمتابعة عبر واتساب ↗</button>
 </form>
-<p id="orderMessage" class="muted" style="margin-top:12px"></p>
 </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-// ضع بيانات مشروع Supabase هنا لاحقاً لتفعيل قاعدة البيانات والحسابات
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
-
 const WHATSAPP = "218934551020";
-let db = null;
-let currentUser = null;
-let authMode = "login";
 let selected = null;
 
 const services = [
@@ -228,7 +208,7 @@ $("serviceGrid").innerHTML = services.map(s=>`
 <h3>${s.title}</h3>
 <p>${s.description}</p>
 </div>
-<span class="cardlink">اكتشف التفاصيل ↙</span>
+<span class="cardlink">استعراض الفروع والخدمات ↙</span>
 </div>
 </div>`).join("");
 }
@@ -236,174 +216,48 @@ $("serviceGrid").innerHTML = services.map(s=>`
 function showService(key){
 selected = services.find(s=>s.key===key);
 if(!selected)return;
-$("main").classList.add("hidden");
-$("dashboard").classList.add("hidden");
-$("detail").classList.remove("hidden");
-$("detailContent").innerHTML=`
-<div class="about" style="margin-top:25px">
-<div class="tag">KARLO / ${selected.key.toUpperCase()}</div>
-<div class="art" style="border-radius:10px;margin:15px 0">${selected.icon}</div>
-<h1>${selected.title}</h1>
-<p class="muted" style="font-size:16px;margin-top:10px">${selected.description}</p>
-<h3 style="margin-top:25px;color:var(--blue)">ما نقدمه في هذا القسم:</h3>
-<ul>${selected.items.map(i=>`<li>${i}</li>`).join("")}</ul>
-<button class="primary" onclick="openOrder()" style="margin-top:15px">اطلب هذه الخدمة الآن ↙</button>
+$("modalDetailContent").innerHTML=`
+<div style="text-align:right">
+<div class="art" style="border-radius:10px;margin-bottom:15px;height:100px;font-size:45px">${selected.icon}</div>
+<h2 style="color:white;margin-bottom:8px">${selected.title}</h2>
+<p class="muted">${selected.description}</p>
+<h3 style="margin-top:20px;font-size:17px;color:var(--blue)">الخدمات والفروع المتاحة ضمن هذا القسم:</h3>
+<ul class="service-items-list">
+${selected.items.map(i=>`<li>${i}</li>`).join("")}
+</ul>
+<button class="primary" onclick="closeModal('serviceDetailModal'); openOrderModalFromDetail();" style="width:100%;margin-top:10px">اطلب هذه الخدمة الآن ↙</button>
 </div>`;
-window.scrollTo(0,0);
+$("serviceDetailModal").classList.remove("hidden");
+}
+
+function openOrderModalFromDetail(){
+$("selectedService").textContent="القسم المختار: " + selected.title;
+$("orderModal").classList.remove("hidden");
 }
 
 function home(){
-$("detail").classList.add("hidden");
-$("dashboard").classList.add("hidden");
-$("main").classList.remove("hidden");
 window.scrollTo(0,0);
 }
 
 function closeModal(id){$(id).classList.add("hidden")}
 
 function account(){
-if(currentUser){showDashboard();return}
-openAuth("login");
-}
-
-function openAuth(mode){
-authMode=mode;
 $("authModal").classList.remove("hidden");
-$("authTitle").textContent=mode==="signup"?"إنشاء حساب جديد":"تسجيل الدخول";
-$("confirmPassword").classList.toggle("hidden",mode!=="signup");
-$("authSubmit").textContent=mode==="signup"?"إنشاء الحساب":"تسجيل الدخول";
-$("switchBtn").textContent=mode==="signup"?"لديك حساب بالفعل؟ سجل الدخول":"ليس لديك حساب؟ أنشئ حساباً جديداً";
-$("resetBtn").classList.toggle("hidden",mode==="signup");
-$("authMessage").textContent="";
 }
 
-function switchAuth(){
-openAuth(authMode==="login"?"signup":"login");
-}
+function switchAuth(){}
 
-async function handleAuth(e){
+document.getElementById("orderForm").addEventListener("submit", function(e){
 e.preventDefault();
-if(!db){
-$("authMessage").textContent="نظام الحسابات قيد التفعيل حالياً. يمكنك طلب الخدمات مباشرة عبر واتساب.";
-return;
-}
-const email=$("email").value.trim();
-const password=$("password").value;
-try{
-let result;
-if(authMode==="signup"){
-if(password!==$("confirmPassword").value){
-$("authMessage").textContent="كلمتا المرور غير متطابقتين.";return;
-}
-result=await db.auth.signUp({email,password});
-}else{
-result=await db.auth.signInWithPassword({email,password});
-}
-if(result.error)throw result.error;
-if(authMode==="signup"&&!result.data.session){
-$("authMessage").style.color="#4ade80";
-$("authMessage").textContent="تحقق من بريدك الإلكتروني لتأكيد الحساب.";
-return;
-}
-currentUser=result.data.user;
-closeModal("authModal");
-updateAccount();
-showDashboard();
-}catch(err){$("authMessage").textContent=err.message}
-}
-
-async function resetPassword(){
-if(!db){$("authMessage").textContent="نظام الحسابات قيد التفعيل حالياً.";return}
-const email=$("email").value.trim();
-if(!email){$("authMessage").textContent="اكتب بريدك الإلكتروني أولاً.";return}
-const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});
-$("authMessage").textContent=error?error.message:"تم إرسال رابط استعادة كلمة المرور.";
-}
-
-function updateAccount(){
-$("accountBtn").textContent=currentUser?"حسابي":"تسجيل الدخول";
-}
-
-function openOrder(){
-// إذا كانت قاعدة البيانات مفعلة ولم يسجل الدخول، يطلب تسجيل الدخول أولاً
-if(db && !currentUser){
-openAuth("login");
-$("authMessage").textContent="سجل الدخول أولاً لحفظ ومتابعة طلبك.";
-return;
-}
-$("selectedService").textContent="القسم المختار: " + selected.title;
-$("orderModal").classList.remove("hidden");
-}
-
-async function submitOrder(e){
-e.preventDefault();
-const subject=$("subject").value.trim();
-const details=$("details").value.trim();
-
-// حفظ الطلب في Supabase إذا كان مفعلاً
-if(db && currentUser){
-const {error}=await db.from("service_requests").insert({
-user_id:currentUser.id,
-service_key:selected.key,
-service_title:selected.title,
-subject,details,status:"new"
+const subject = document.getElementById("subject").value.trim();
+const details = document.getElementById("details").value.trim();
+const message = `مرحباً KARLO، أريد طلب خدمة.\n*القسم:* ${selected ? selected.title : 'عام'}\n*العنوان:* ${subject}\n*التفاصيل:* ${details}`;
+closeModal('orderModal');
+this.reset();
+window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(message)}`, "_blank");
 });
-if(error){$("orderMessage").textContent=error.message;return}
-}
 
-const message=`مرحباً KARLO، أريد طلب خدمة.\n*القسم:* ${selected.title}\n*العنوان:* ${subject}\n*التفاصيل:* ${details}`;
-closeModal("orderModal");
-$("orderForm").reset();
-window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(message)}`,"_blank");
-if(db && currentUser) showDashboard();
-}
-
-async function showDashboard(){
-if(!currentUser||!db)return;
-$("main").classList.add("hidden");
-$("detail").classList.add("hidden");
-$("dashboard").classList.remove("hidden");
-$("userEmail").textContent=currentUser.email;
-$("ordersList").textContent="جارٍ تحميل الطلبات...";
-const {data,error}=await db.from("service_requests").select("*").order("created_at",{ascending:false});
-if(error){$("ordersList").textContent=error.message;return}
-$("ordersList").innerHTML=data.length?data.map(o=>`
-<div class="ordercard">
-<h3>${escapeHTML(o.subject)}</h3>
-<p style="color:var(--blue)">${escapeHTML(o.service_title)}</p>
-<small class="muted">الحالة: ${escapeHTML(o.status)}</small>
-</div>`).join(""):"لا توجد طلبات مسجلة حتى الآن.";
-window.scrollTo(0,0);
-}
-
-function escapeHTML(value){
-return String(value).replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">",'"':""","'":"'"}[c]));
-}
-
-async function logout(){
-if(db)await db.auth.signOut();
-currentUser=null;
-updateAccount();
-home();
-}
-
-$("authForm").addEventListener("submit",handleAuth);
-$("orderForm").addEventListener("submit",submitOrder);
-
-async function init(){
 renderServices();
-if(SUPABASE_URL.startsWith("https://")&&SUPABASE_ANON_KEY!=="YOUR_SUPABASE_ANON_KEY"){
-db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-const {data}=await db.auth.getSession();
-currentUser=data.session?.user||null;
-updateAccount();
-db.auth.onAuthStateChange((_event,session)=>{
-currentUser=session?.user||null;
-updateAccount();
-});
-}
-}
-init();
 </script>
 
 </body>
